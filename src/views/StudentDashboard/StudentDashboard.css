@@ -1,0 +1,470 @@
+/* Intellect Academy Brand Colors (Based on Logo) */
+:root {
+  --ia-blue: #3b4298;
+  --ia-blue-dark: #2d3378;
+  --ia-orange: #f97316;
+  --ia-orange-hover: #ea580c;
+  --ia-bg: #f8fafc;
+  --ia-card-bg: #ffffff;
+  --ia-text-main: #0f172a;
+  --ia-text-muted: #64748b;
+  --ia-border: #e2e8f0;
+}
+
+/* Layout Container */
+.ia-student-dashboard {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  background-color: var(--ia-bg);
+  /* min-height: calc(100vh - 70px); */
+}
+
+.ia-dashboard-main {
+  width: 100%;
+  max-width: 1100px; /* Kengroq va salobatli hajm */
+  margin: 0 auto;
+}
+
+/* Toast Notification (Top-Right Corner) */
+.ia-toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--ia-card-bg);
+  color: var(--ia-text-main);
+  border-radius: 14px;
+  box-shadow: 0 15px 30px -5px rgba(59, 66, 152, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border-left: 5px solid var(--ia-blue);
+  font-size: 15px;
+  font-weight: 500;
+  max-width: 420px;
+}
+
+.ia-toast-notification.success {
+  border-left-color: var(--ia-orange);
+}
+
+.ia-toast-notification.error {
+  border-left-color: #f43f5e;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+/* Professional Custom Modal */
+.ia-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ia-modal-card {
+  background: var(--ia-card-bg);
+  width: 100%;
+  max-width: 460px;
+  border-radius: 28px;
+  padding: 36px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(59, 66, 152, 0.25);
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid var(--ia-border);
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ia-modal-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  background: #fff7ed; /* Soft orange tint */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  border: 2px solid #ffedd5;
+}
+
+.ia-modal-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ia-text-main);
+  margin-bottom: 10px;
+}
+
+.ia-modal-card p {
+  font-size: 15px;
+  color: var(--ia-text-muted);
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.ia-modal-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.ia-modal-btn {
+  flex: 1;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ia-modal-btn.cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ia-modal-btn.cancel:hover {
+  background: #e2e8f0;
+}
+
+.ia-modal-btn.confirm {
+  background: var(--ia-orange);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+}
+
+.ia-modal-btn.confirm:hover {
+  background: var(--ia-orange-hover);
+  transform: translateY(-1px);
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* State Containers (Loading, Error, Empty) */
+.ia-state-container {
+  background: var(--ia-card-bg);
+  border-radius: 24px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(59, 66, 152, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: var(--ia-text-muted);
+  font-size: 16px;
+  border: 1px solid var(--ia-border);
+}
+
+.ia-spinner {
+  width: 44px;
+  height: 44px;
+  color: var(--ia-blue);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ia-error-icon {
+  width: 52px;
+  height: 52px;
+  color: #f43f5e;
+}
+
+/* Result / Locked Card */
+.ia-result-card {
+  background: var(--ia-card-bg);
+  border-radius: 28px;
+  padding: 60px 40px;
+  text-align: center;
+  box-shadow: 0 15px 35px rgba(59, 66, 152, 0.06);
+  border: 1px solid var(--ia-border);
+  max-width: 680px;
+  margin: 40px auto;
+}
+
+.ia-lock-icon-wrapper {
+  width: 88px;
+  height: 88px;
+  background: #eef2ff; /* Soft blue tint */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px auto;
+  border: 2px solid #e0e7ff;
+}
+
+.ia-lock-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--ia-blue);
+}
+
+.ia-result-card h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ia-text-main);
+  margin-bottom: 12px;
+}
+
+.ia-result-subtitle {
+  font-size: 16px;
+  color: var(--ia-text-muted);
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+
+.ia-logout-btn {
+  background: var(--ia-text-main);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 14px 32px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.ia-logout-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+/* Rules Card */
+.ia-rules-card {
+  background: var(--ia-card-bg);
+  border-radius: 28px;
+  padding: 48px;
+  box-shadow: 0 15px 35px rgba(59, 66, 152, 0.06);
+  border: 1px solid var(--ia-border);
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+.ia-rules-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  background: #fff7ed;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border: 2px solid #ffedd5;
+}
+
+.ia-rules-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--ia-orange);
+}
+
+.ia-rules-card h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ia-text-main);
+  margin-bottom: 10px;
+}
+
+.ia-rules-desc {
+  color: var(--ia-text-muted);
+  font-size: 16px;
+  margin-bottom: 28px;
+}
+
+.ia-rules-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ia-rules-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 15px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.ia-start-exam-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--ia-blue) 0%, var(--ia-blue-dark) 100%);
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(59, 66, 152, 0.35);
+  transition: all 0.2s ease;
+}
+
+.ia-start-exam-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 66, 152, 0.45);
+}
+
+/* Active Exam Interface Container (Kengroq va yirik ko'rinish) */
+.ia-exam-container {
+  background: var(--ia-card-bg);
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow: 0 15px 35px rgba(59, 66, 152, 0.06);
+  border: 1px solid var(--ia-border);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.ia-exam-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ia-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: var(--ia-text-muted);
+}
+
+.ia-progress-meta strong {
+  color: var(--ia-text-main);
+  font-size: 16px;
+}
+
+.ia-progress-percentage {
+  font-weight: 600;
+  color: var(--ia-orange);
+}
+
+.ia-progress-track {
+  width: 100%;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ia-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ia-blue) 0%, var(--ia-orange) 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.ia-question-wrapper {
+  min-height: 320px;
+  padding: 10px 0;
+}
+
+/* Exam Navigation Buttons */
+.ia-exam-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--ia-border);
+  padding-top: 28px;
+  margin-top: 10px;
+}
+
+.ia-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ia-nav-btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ia-nav-btn.secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.ia-nav-btn.secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ia-nav-btn.primary {
+  background: var(--ia-blue);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(59, 66, 152, 0.25);
+}
+
+.ia-nav-btn.primary:hover {
+  background: var(--ia-blue-dark);
+  transform: translateY(-1px);
+}
+
+.ia-nav-btn.success {
+  background: var(--ia-orange);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
+}
+
+.ia-nav-btn.success:hover {
+  background: var(--ia-orange-hover);
+  transform: translateY(-1px);
+}
