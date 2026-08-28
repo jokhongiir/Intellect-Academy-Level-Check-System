@@ -1,25 +1,35 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../../../api/supabaseClient'
+import {
+  PlusIcon,
+  TrashIcon,
+  ClipboardDocumentIcon,
+  XMarkIcon,
+  UserIcon,
+  MagnifyingGlassIcon
+} from '@heroicons/vue/24/outline'
 import './AddStudent.css'
 
+/* ===================== STATE ===================== */
 const students = ref([])
+const loading = ref(false)
+const detailLoading = ref(false)
+const errorMsg = ref('')
+
 const isModalOpen = ref(false)
 const isDetailModalOpen = ref(false)
 const selectedStudent = ref(null)
 const studentTests = ref([])
-const loading = ref(false)
-const detailLoading = ref(false)
-const errorMsg = ref('')
 
 const fullName = ref('')
 const level = ref('beginner')
 const studentId = ref('')
 
-// Filter state for table ('all', 'beginner', 'elementary')
 const selectedFilterLevel = ref('all')
+const searchQuery = ref('')
 
-// States for Custom Modal Alerts and Confirms
+/* Confirm & Alert Modals */
 const confirmModal = ref({
   isOpen: false,
   title: '',
@@ -31,24 +41,71 @@ const alertModal = ref({
   isOpen: false,
   title: '',
   message: '',
-  type: 'info' // 'success' or 'error'
+  type: 'info' // success | error
 })
 
-// Filtered students computed property
+/* ===================== COMPUTED ===================== */
 const filteredStudents = computed(() => {
-  if (selectedFilterLevel.value === 'all') {
-    return students.value
+  let list = students.value
+
+  if (selectedFilterLevel.value !== 'all') {
+    list = list.filter(s => s.level === selectedFilterLevel.value)
   }
-  return students.value.filter(student => student.level === selectedFilterLevel.value)
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(
+      s =>
+        s.full_name?.toLowerCase().includes(q) ||
+        s.student_id?.toLowerCase().includes(q)
+    )
+  }
+
+  return list
 })
 
-// Generate Unique Student ID and Verify via Database
+/* ===================== HELPERS ===================== */
+const shuffleArray = (array) => {
+  const arr = [...array]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
+const formatSectionName = (type) => {
+  const names = {
+    multiple_choice: 'Multiple Choice',
+    note_completion: 'Note Completion',
+    summary_completion: 'Summary Completion',
+    short_answer: 'Short Answer',
+    reading: 'Reading Comprehension',
+    writing: 'Writing Task'
+  }
+  return names[type] || type
+}
+
+const showAlert = (title, message, type = 'info') => {
+  alertModal.value = { isOpen: true, title, message, type }
+}
+
+const closeAlertModal = () => {
+  alertModal.value.isOpen = false
+}
+
+const closeConfirmModal = () => {
+  confirmModal.value.isOpen = false
+}
+
+/* ===================== STUDENT ID ===================== */
 const generateUniqueStudentId = async () => {
   let isUnique = false
   let newId = ''
 
   while (!isUnique) {
     newId = 'IA-' + Math.floor(1000 + Math.random() * 9000)
+
     const { data, error } = await supabase
       .from('students')
       .select('id')
@@ -56,71 +113,17 @@ const generateUniqueStudentId = async () => {
       .maybeSingle()
 
     if (error) {
-      console.error("Error checking ID uniqueness:", error.message)
+      console.error('ID uniqueness check failed:', error.message)
       break
     }
 
-    if (!data) {
-      isUnique = true
-    }
+    if (!data) isUnique = true
   }
+
   return newId
 }
 
-const generateCredentials = async () => {
-  studentId.value = await generateUniqueStudentId()
-}
-
-const openModal = async () => {
-  loading.value = true
-  fullName.value = ''
-  level.value = 'beginner'
-  errorMsg.value = ''
-  
-  await generateCredentials()
-  isModalOpen.value = true
-  loading.value = false
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-}
-
-// Open Student Details & Fetch Assigned Tests from beginner_tests or elementary_tests
-const openStudentDetailModal = async (student, event) => {
-  if (event) event.stopPropagation()
-  selectedStudent.value = student
-  isDetailModalOpen.value = true
-  studentTests.value = []
-  
-  if (student.assigned_questions && student.assigned_questions.length > 0) {
-    detailLoading.value = true
-    try {
-      const tableName = student.level === 'elementary' ? 'elementary_tests' : 'beginner_tests'
-
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .in('id', student.assigned_questions)
-
-      if (error) throw error
-      
-      const testMap = new Map(data.map(t => [t.id, t]))
-      studentTests.value = student.assigned_questions.map(id => testMap.get(id)).filter(Boolean)
-    } catch (err) {
-      console.error("Error fetching assigned tests:", err.message)
-    } finally {
-      detailLoading.value = false
-    }
-  }
-}
-
-const closeDetailModal = () => {
-  isDetailModalOpen.value = false
-  selectedStudent.value = null
-  studentTests.value = []
-}
-
+/* ===================== CRUD ===================== */
 const fetchStudents = async () => {
   try {
     const { data, error } = await supabase
@@ -131,39 +134,36 @@ const fetchStudents = async () => {
     if (error) throw error
     students.value = data || []
   } catch (err) {
-    console.error("Error fetching students:", err.message)
+    console.error('Fetch students error:', err.message)
   }
 }
 
-onMounted(() => {
-  fetchStudents()
-})
+const openModal = async () => {
+  loading.value = true
+  fullName.value = ''
+  level.value = 'beginner'
+  errorMsg.value = ''
 
-/**
- * Fisher-Yates Perfect Shuffle Algorithm
- * Ensures 100% true random distribution for tests.
- */
-const shuffleArray = (array) => {
-  const arr = [...array]
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr
+  studentId.value = await generateUniqueStudentId()
+  isModalOpen.value = true
+  loading.value = false
 }
 
-/**
- * Professional algorithm to structure tests strictly by section types:
- * 1. First 30 questions (Multiple Choice & Note Completion)
- * 2. Followed by Reading
- * 3. Ending with Writing Task
- */
+const closeModal = () => {
+  isModalOpen.value = false
+}
+
 const handleCreateStudent = async () => {
   errorMsg.value = ''
   loading.value = true
 
   try {
-    const tableName = level.value === 'elementary' ? 'elementary_tests' : 'beginner_tests'
+    if (!fullName.value.trim()) {
+      throw new Error('Full name is required')
+    }
+
+    const tableName =
+      level.value === 'elementary' ? 'elementary_tests' : 'beginner_tests'
 
     const { data: levelTests, error: qError } = await supabase
       .from(tableName)
@@ -172,11 +172,13 @@ const handleCreateStudent = async () => {
 
     if (qError) throw qError
 
-    if (!levelTests || levelTests.length === 0) {
-      throw new Error(`No tests available in "${tableName}" for the "${level.value}" level! Please add questions first.`)
+    if (!levelTests?.length) {
+      throw new Error(
+        `"${level.value}" darajasi uchun testlar topilmadi. Avval savollar qo‘shing.`
+      )
     }
 
-    // Group tests safely by section_type
+    // Group by section
     const sections = {
       writing: levelTests.filter(t => t.section_type === 'writing'),
       reading: levelTests.filter(t => t.section_type === 'reading'),
@@ -186,13 +188,12 @@ const handleCreateStudent = async () => {
       short_answer: levelTests.filter(t => t.section_type === 'short_answer')
     }
 
-    // Apply Fisher-Yates shuffle and strict limits per section type
+    // Strict structure: 24 MC + 6 Note → Reading → Writing
     const selectedMultiples = shuffleArray(sections.multiple_choice).slice(0, 24)
-    const selectedNotes = shuffleArray(sections.note_completion).slice(0, 10) // Jami 30 ta savol
-    const selectedReadings = shuffleArray(sections.reading).slice(0, 5)     // 30 savoldan keyin Reading
-    const selectedWritings = shuffleArray(sections.writing).slice(0, 1)     // Eng oxirida Writing
+    const selectedNotes = shuffleArray(sections.note_completion).slice(0, 6)
+    const selectedReadings = shuffleArray(sections.reading).slice(0, 5)
+    const selectedWritings = shuffleArray(sections.writing).slice(0, 1)
 
-    // Structured sequence: First 30 questions -> Reading -> Writing
     const structuredTests = [
       ...selectedMultiples,
       ...selectedNotes,
@@ -200,18 +201,18 @@ const handleCreateStudent = async () => {
       ...selectedWritings
     ]
 
-    if (structuredTests.length === 0) {
-      throw new Error("Could not construct a test package. Please check if section types match properly in your database.")
+    if (!structuredTests.length) {
+      throw new Error('Test paketini yig‘ib bo‘lmadi. Section typelarini tekshiring.')
     }
 
-    const shuffledIds = structuredTests.map(test => test.id)
+    const assignedIds = structuredTests.map(t => t.id)
 
     const { error: insertError } = await supabase.from('students').insert([
       {
         student_id: studentId.value,
         full_name: fullName.value.trim(),
         level: level.value,
-        assigned_questions: shuffledIds
+        assigned_questions: assignedIds
       }
     ])
 
@@ -219,10 +220,9 @@ const handleCreateStudent = async () => {
 
     await fetchStudents()
     isModalOpen.value = false
-    
-    showAlert('Success!', 'New student has been successfully added with structured tests.', 'success')
+    showAlert('Success', 'Yangi student muvaffaqiyatli qo‘shildi.', 'success')
   } catch (err) {
-    errorMsg.value = 'Error: ' + err.message
+    errorMsg.value = err.message
   } finally {
     loading.value = false
   }
@@ -230,98 +230,138 @@ const handleCreateStudent = async () => {
 
 const deleteStudent = (id, event) => {
   if (event) event.stopPropagation()
+
   confirmModal.value = {
     isOpen: true,
     title: 'Delete Student',
-    message: 'Are you sure you want to delete this student from the database? This action cannot be undone.',
+    message:
+      'Ushbu studentni o‘chirishni tasdiqlaysizmi? Bu amalni qaytarib bo‘lmaydi.',
     onConfirm: async () => {
       try {
         const { error } = await supabase.from('students').delete().eq('id', id)
         if (error) throw error
+
         await fetchStudents()
         closeConfirmModal()
-        showAlert('Deleted', 'Student has been successfully removed.', 'success')
+        showAlert('Deleted', 'Student muvaffaqiyatli o‘chirildi.', 'success')
       } catch (err) {
         closeConfirmModal()
-        showAlert('Error', 'Deletion failed: ' + err.message, 'error')
+        showAlert('Error', 'O‘chirishda xatolik: ' + err.message, 'error')
       }
     }
   }
 }
 
-const closeConfirmModal = () => {
-  confirmModal.value.isOpen = false
-}
+/* ===================== DETAIL MODAL ===================== */
+const openStudentDetailModal = async (student, event) => {
+  if (event) event.stopPropagation()
 
-const showAlert = (title, message, type = 'info') => {
-  alertModal.value = {
-    isOpen: true,
-    title,
-    message,
-    type
+  selectedStudent.value = student
+  isDetailModalOpen.value = true
+  studentTests.value = []
+
+  if (!student.assigned_questions?.length) return
+
+  detailLoading.value = true
+  try {
+    const tableName =
+      student.level === 'elementary' ? 'elementary_tests' : 'beginner_tests'
+
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .in('id', student.assigned_questions)
+
+    if (error) throw error
+
+    // Preserve original order
+    const testMap = new Map(data.map(t => [t.id, t]))
+    studentTests.value = student.assigned_questions
+      .map(id => testMap.get(id))
+      .filter(Boolean)
+  } catch (err) {
+    console.error('Fetch assigned tests error:', err.message)
+  } finally {
+    detailLoading.value = false
   }
 }
 
-const closeAlertModal = () => {
-  alertModal.value.isOpen = false
+const closeDetailModal = () => {
+  isDetailModalOpen.value = false
+  selectedStudent.value = null
+  studentTests.value = []
 }
 
+/* ===================== UTILS ===================== */
 const copyToClipboard = (text, type, event) => {
   if (event) event.stopPropagation()
   navigator.clipboard.writeText(text)
-  showAlert('Copied', `${type} successfully copied to clipboard: ${text}`, 'success')
+  showAlert('Copied', `${type} nusxa olindi: ${text}`, 'success')
 }
 
-const formatSectionName = (type) => {
-  const names = {
-    multiple_choice: 'Multiple Choice',
-    note_completion: 'Note Completion',
-    summary_completion: 'Summary Completion',
-    short_answer: 'Short Answer Questions',
-    reading: 'Reading Comprehension',
-    writing: 'Writing Task'
-  }
-  return names[type] || type
-}
+onMounted(() => {
+  fetchStudents()
+})
 </script>
 
 <template>
-  <div class="students-management">
+  <div class="students-page">
+    <!-- Header -->
     <div class="page-header">
-      <div>
+      <div class="header-left">
         <h2>Students Management</h2>
-        <p>Click on the assigned questions count badge to view tests</p>
+        <p>Studentlarni boshqaring va ularga testlar biriktiring</p>
       </div>
-      <button @click="openModal" class="add-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <button class="btn-primary" @click="openModal">
+        <PlusIcon class="btn-icon" />
         Add New Student
       </button>
     </div>
 
-    <!-- LEVEL FILTER BAR -->
-    <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-      <span style="font-size: 0.9rem; font-weight: 600; color: #475569;">Filter by Level:</span>
-      <button 
-        @click="selectedFilterLevel = 'all'" 
-        :style="{ background: selectedFilterLevel === 'all' ? '#2563eb' : '#ffffff', color: selectedFilterLevel === 'all' ? '#ffffff' : '#475569', border: '1px solid #cbd5e1', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s' }">
-        All
-      </button>
-      <button 
-        @click="selectedFilterLevel = 'beginner'" 
-        :style="{ background: selectedFilterLevel === 'beginner' ? '#2563eb' : '#ffffff', color: selectedFilterLevel === 'beginner' ? '#ffffff' : '#475569', border: '1px solid #cbd5e1', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s' }">
-        Beginner
-      </button>
-      <button 
-        @click="selectedFilterLevel = 'elementary'" 
-        :style="{ background: selectedFilterLevel === 'elementary' ? '#2563eb' : '#ffffff', color: selectedFilterLevel === 'elementary' ? '#ffffff' : '#475569', border: '1px solid #cbd5e1', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s' }">
-        Elementary
-      </button>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <MagnifyingGlassIcon class="search-icon" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Ism yoki Student ID bo‘yicha qidirish..."
+        />
+      </div>
+
+      <div class="filter-group">
+        <button
+          class="filter-btn"
+          :class="{ active: selectedFilterLevel === 'all' }"
+          @click="selectedFilterLevel = 'all'"
+        >
+          All
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedFilterLevel === 'beginner' }"
+          @click="selectedFilterLevel = 'beginner'"
+        >
+          Beginner
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedFilterLevel === 'elementary' }"
+          @click="selectedFilterLevel = 'elementary'"
+        >
+          Elementary
+        </button>
+      </div>
     </div>
 
-    <div v-if="errorMsg" class="error-banner">{{ errorMsg }}</div>
+    <!-- Error -->
+    <div v-if="errorMsg" class="error-banner">
+      {{ errorMsg }}
+    </div>
 
+    <!-- Table -->
     <div class="table-card">
-      <div class="table-responsive">
+      <div class="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -335,39 +375,63 @@ const formatSectionName = (type) => {
           </thead>
           <tbody>
             <tr v-if="filteredStudents.length === 0">
-              <td colspan="6" class="empty-state">
-                <div class="empty-content">
-                  <p>No students available for this filter</p>
+              <td colspan="6" class="empty-cell">
+                <div class="empty-state">
+                  <UserIcon class="empty-icon" />
+                  <p>Student topilmadi</p>
                 </div>
               </td>
             </tr>
-            <tr v-for="(student, index) in filteredStudents" :key="student.id">
+
+            <tr
+              v-for="(student, index) in filteredStudents"
+              :key="student.id"
+            >
               <td>{{ index + 1 }}</td>
+
               <td>
-                <div class="student-name-cell">
-                  <div class="avatar">{{ student.full_name.charAt(0).toUpperCase() }}</div>
-                  <strong>{{ student.full_name }}</strong>
+                <div class="student-cell">
+                  <div class="avatar">
+                    {{ student.full_name?.charAt(0)?.toUpperCase() || '?' }}
+                  </div>
+                  <span class="name">{{ student.full_name }}</span>
                 </div>
               </td>
+
               <td>
-                <span class="code-badge id-badge" @click="copyToClipboard(student.student_id, 'Student ID', $event)" title="Click to copy" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <button
+                  class="id-badge"
+                  title="Copy ID"
+                  @click="copyToClipboard(student.student_id, 'Student ID', $event)"
+                >
                   {{ student.student_id }}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                </span>
+                  <ClipboardDocumentIcon class="copy-icon" />
+                </button>
               </td>
+
               <td>
                 <span class="level-badge" :class="student.level">
                   {{ student.level }}
                 </span>
               </td>
+
               <td>
-                <span @click="openStudentDetailModal(student, $event)" title="Click to view tests" style="font-weight: 600; color: #2563eb; background: #eff6ff; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #bfdbfe;">
+                <button
+                  class="questions-badge"
+                  title="View assigned tests"
+                  @click="openStudentDetailModal(student, $event)"
+                >
                   {{ student.assigned_questions?.length || 0 }} questions
-                </span>
+                </button>
               </td>
+
               <td class="text-right">
-                <button @click="deleteStudent(student.id, $event)" class="action-delete-btn" title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                <button
+                  class="delete-btn"
+                  title="Delete"
+                  @click="deleteStudent(student.id, $event)"
+                >
+                  <TrashIcon class="action-icon" />
                 </button>
               </td>
             </tr>
@@ -376,83 +440,29 @@ const formatSectionName = (type) => {
       </div>
     </div>
 
-    <!-- STUDENT DETAILS & ASSIGNED TESTS MODAL -->
-    <div v-if="isDetailModalOpen" class="modal-backdrop" @click.self="closeDetailModal">
-      <div class="modal-card animate-scale" style="max-width: 800px; width: 90%; max-height: 85vh; display: flex; flex-direction: column;">
-        <div class="modal-header">
-          <div>
-            <h3 style="margin: 0; font-size: 1.25rem;">Student Details & Tests</h3>
-            <p v-if="selectedStudent" style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">
-              {{ selectedStudent.full_name }} (ID: <strong>{{ selectedStudent.student_id }}</strong>)
-            </p>
-          </div>
-          <button @click="closeDetailModal" class="close-icon" title="Close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-
-        <div style="padding: 1.5rem; overflow-y: auto; flex: 1;">
-          <div v-if="detailLoading" style="text-align: center; padding: 2rem; color: #64748b;">
-            Loading assigned tests...
-          </div>
-          
-          <div v-else-if="studentTests.length === 0" style="text-align: center; padding: 2rem; color: #64748b;">
-            No questions found for this student.
-          </div>
-
-          <div v-else style="display: flex; flex-direction: column; gap: 1rem;">
-            <div style="font-size: 0.95rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
-              Assigned Questions List (Total: {{ studentTests.length }})
-            </div>
-
-            <div v-for="(test, idx) in studentTests" :key="test.id" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.85rem; font-weight: bold; color: #2563eb;">#{{ idx + 1 }} - {{ formatSectionName(test.section_type) }}</span>
-                <span class="level-badge" :class="test.level" style="font-size: 0.75rem; padding: 2px 8px;">{{ test.level }}</span>
-              </div>
-
-              <div v-if="test.passage_text" style="font-size: 0.9rem; color: #334155; margin-bottom: 0.5rem; background: #fff; padding: 8px; border-radius: 4px; border: 1px dashed #cbd5e1;">
-                <strong>Passage:</strong> {{ test.passage_text }}
-              </div>
-
-              <div style="font-weight: 500; color: #0f172a; margin-bottom: 0.5rem; font-size: 0.95rem;">
-                {{ test.question }}
-              </div>
-
-              <div v-if="test.option_a" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 0.5rem; font-size: 0.85rem;">
-                <div :style="{ background: test.correct_answer === 'A' ? '#dcfce7' : '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }"><strong>A:</strong> {{ test.option_a }}</div>
-                <div :style="{ background: test.correct_answer === 'B' ? '#dcfce7' : '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }"><strong>B:</strong> {{ test.option_b }}</div>
-                <div :style="{ background: test.correct_answer === 'C' ? '#dcfce7' : '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }"><strong>C:</strong> {{ test.option_c }}</div>
-                <div :style="{ background: test.correct_answer === 'D' ? '#dcfce7' : '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }"><strong>D:</strong> {{ test.option_d }}</div>
-              </div>
-
-              <div style="font-size: 0.85rem; color: #166534; background: #f0fdf4; padding: 6px 10px; border-radius: 4px; display: inline-block;">
-                <strong>Correct Answer:</strong> {{ test.correct_answer }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions" style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
-          <button type="button" @click="closeDetailModal" class="cancel-btn">Close</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add Student Modal -->
-    <div v-if="isModalOpen" class="modal-backdrop" @click.self="closeModal">
-      <div class="modal-card animate-scale">
+    <!-- ===================== ADD STUDENT MODAL ===================== -->
+    <div
+      v-if="isModalOpen"
+      class="modal-backdrop"
+      @click.self="closeModal"
+    >
+      <div class="modal-card">
         <div class="modal-header">
           <h3>Add New Student</h3>
-          <button @click="closeModal" class="close-icon" title="Close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <button class="close-btn" @click="closeModal">
+            <XMarkIcon class="close-icon" />
           </button>
         </div>
 
-        <form @submit.prevent="handleCreateStudent" class="modal-form">
+        <form class="modal-body" @submit.prevent="handleCreateStudent">
           <div class="field">
-            <label>Full Name.</label>
-            <input type="text" v-model="fullName" required placeholder="e.g. Alisher Valiyev" />
+            <label>Full Name</label>
+            <input
+              v-model="fullName"
+              type="text"
+              required
+              placeholder="Masalan: Alisher Valiyev"
+            />
           </div>
 
           <div class="field">
@@ -465,12 +475,21 @@ const formatSectionName = (type) => {
 
           <div class="field">
             <label>Auto-Generated Student ID</label>
-            <input type="text" v-model="studentId" required readonly style="background-color: #f9f9f9; font-weight: bold; font-size: 16px; letter-spacing: 1px;" />
+            <input
+              v-model="studentId"
+              type="text"
+              readonly
+              class="readonly-input"
+            />
           </div>
 
-          <div class="modal-actions">
-            <button type="button" @click="closeModal" class="cancel-btn">Cancel</button>
-            <button type="submit" class="submit-modal-btn" :disabled="loading">
+          <div v-if="errorMsg" class="form-error">{{ errorMsg }}</div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" @click="closeModal">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" :disabled="loading">
               {{ loading ? 'Saving...' : 'Save Student' }}
             </button>
           </div>
@@ -478,39 +497,159 @@ const formatSectionName = (type) => {
       </div>
     </div>
 
-    <!-- Confirm Modal -->
-    <div v-if="confirmModal.isOpen" class="modal-backdrop" @click.self="closeConfirmModal">
-      <div class="modal-card animate-scale" style="max-width: 400px; text-align: center;">
-        <div class="modal-header" style="justify-content: center; position: relative;">
-          <h3 style="color: #ef4444;">{{ confirmModal.title }}</h3>
-          <button @click="closeConfirmModal" class="close-icon" style="position: absolute; right: 1rem;" title="Close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    <!-- ===================== DETAIL MODAL ===================== -->
+    <div
+      v-if="isDetailModalOpen"
+      class="modal-backdrop"
+      @click.self="closeDetailModal"
+    >
+      <div class="modal-card detail-modal">
+        <div class="modal-header">
+          <div>
+            <h3>Student Details & Tests</h3>
+            <p v-if="selectedStudent" class="subtitle">
+              {{ selectedStudent.full_name }}
+              · ID: <strong>{{ selectedStudent.student_id }}</strong>
+            </p>
+          </div>
+          <button class="close-btn" @click="closeDetailModal">
+            <XMarkIcon class="close-icon" />
           </button>
         </div>
-        <div style="padding: 1.5rem;">
-          <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">{{ confirmModal.message }}</p>
+
+        <div class="modal-body detail-body">
+          <div v-if="detailLoading" class="loading-state">
+            Loading assigned tests...
+          </div>
+
+          <div v-else-if="!studentTests.length" class="empty-state">
+            Bu studentga test biriktirilmagan.
+          </div>
+
+          <div v-else class="tests-list">
+            <div class="tests-count">
+              Jami: <strong>{{ studentTests.length }}</strong> ta savol
+            </div>
+
+            <div
+              v-for="(test, idx) in studentTests"
+              :key="test.id"
+              class="test-card"
+            >
+              <div class="test-header">
+                <span class="test-number">
+                  #{{ idx + 1 }} — {{ formatSectionName(test.section_type) }}
+                </span>
+                <span class="level-badge small" :class="test.level">
+                  {{ test.level }}
+                </span>
+              </div>
+
+              <div v-if="test.passage_text" class="passage">
+                <strong>Passage:</strong> {{ test.passage_text }}
+              </div>
+
+              <div class="question-text">{{ test.question }}</div>
+
+              <div v-if="test.option_a" class="options-grid">
+                <div
+                  class="option"
+                  :class="{ correct: test.correct_answer === 'A' }"
+                >
+                  <strong>A:</strong> {{ test.option_a }}
+                </div>
+                <div
+                  class="option"
+                  :class="{ correct: test.correct_answer === 'B' }"
+                >
+                  <strong>B:</strong> {{ test.option_b }}
+                </div>
+                <div
+                  class="option"
+                  :class="{ correct: test.correct_answer === 'C' }"
+                >
+                  <strong>C:</strong> {{ test.option_c }}
+                </div>
+                <div
+                  class="option"
+                  :class="{ correct: test.correct_answer === 'D' }"
+                >
+                  <strong>D:</strong> {{ test.option_d }}
+                </div>
+              </div>
+
+              <div class="correct-answer">
+                Correct Answer: <strong>{{ test.correct_answer }}</strong>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="modal-actions" style="justify-content: center; padding-bottom: 1rem;">
-          <button type="button" @click="closeConfirmModal" class="cancel-btn">Cancel</button>
-          <button type="button" @click="confirmModal.onConfirm" class="submit-modal-btn" style="background-color: #ef4444;">Delete</button>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeDetailModal">
+            Close
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Alert Modal -->
-    <div v-if="alertModal.isOpen" class="modal-backdrop" @click.self="closeAlertModal">
-      <div class="modal-card animate-scale" style="max-width: 400px; text-align: center;">
-        <div class="modal-header" style="justify-content: center; position: relative;">
-          <h3 :style="{ color: alertModal.type === 'success' ? '#10b981' : '#ef4444' }">{{ alertModal.title }}</h3>
-          <button @click="closeAlertModal" class="close-icon" style="position: absolute; right: 1rem;" title="Close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    <!-- ===================== CONFIRM MODAL ===================== -->
+    <div
+      v-if="confirmModal.isOpen"
+      class="modal-backdrop"
+      @click.self="closeConfirmModal"
+    >
+      <div class="modal-card small-modal">
+        <div class="modal-header centered">
+          <h3 class="danger-title">{{ confirmModal.title }}</h3>
+          <button class="close-btn absolute" @click="closeConfirmModal">
+            <XMarkIcon class="close-icon" />
           </button>
         </div>
-        <div style="padding: 1.5rem;">
-          <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">{{ alertModal.message }}</p>
+
+        <div class="modal-body centered">
+          <p>{{ confirmModal.message }}</p>
         </div>
-        <div class="modal-actions" style="justify-content: center; padding-bottom: 1rem;">
-          <button type="button" @click="closeAlertModal" class="submit-modal-btn">Got it</button>
+
+        <div class="modal-footer centered">
+          <button class="btn-secondary" @click="closeConfirmModal">
+            Cancel
+          </button>
+          <button class="btn-danger" @click="confirmModal.onConfirm">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ALERT MODAL ===================== -->
+    <div
+      v-if="alertModal.isOpen"
+      class="modal-backdrop"
+      @click.self="closeAlertModal"
+    >
+      <div class="modal-card small-modal">
+        <div class="modal-header centered">
+          <h3
+            :class="
+              alertModal.type === 'success' ? 'success-title' : 'danger-title'
+            "
+          >
+            {{ alertModal.title }}
+          </h3>
+          <button class="close-btn absolute" @click="closeAlertModal">
+            <XMarkIcon class="close-icon" />
+          </button>
+        </div>
+
+        <div class="modal-body centered">
+          <p>{{ alertModal.message }}</p>
+        </div>
+
+        <div class="modal-footer centered">
+          <button class="btn-primary" @click="closeAlertModal">
+            Got it
+          </button>
         </div>
       </div>
     </div>

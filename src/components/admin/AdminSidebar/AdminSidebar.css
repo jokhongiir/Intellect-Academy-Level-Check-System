@@ -1,242 +1,201 @@
+/* ==========================================
+   ADMIN SIDEBAR STYLING (PROFESSIONAL SAAS)
+   ========================================== */
+
 .ia-admin-sidebar {
-  width: 280px;
+  width: 260px;
+  height: 100vh;
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  justify-content: space-between;
+  padding: 20px 14px;
   position: sticky;
-  top: 0;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  z-index: 50;
-  box-shadow: 4px 0 25px -5px rgba(0, 0, 0, 0.02);
+  top: 76px;
+  left: 0;
+  z-index: 900;
+  box-shadow: 4px 0 20px -5px rgba(0, 0, 0, 0.02);
+  font-family: 'Inter', -apple-system, BlinkMacSystemText, sans-serif;
   user-select: none;
+  box-sizing: border-box;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
 }
 
+/* Collapsed Sidebar State */
 .ia-admin-sidebar.collapsed {
   width: 84px;
+  padding: 20px 10px;
 }
 
-/* Sidebar Header & Brand Area */
-.ia-sidebar-header {
-  height: 84px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #f1f5f9;
-  gap: 10px;
-}
-
-.ia-admin-sidebar.collapsed .ia-sidebar-header {
-  padding: 0 16px;
-  justify-content: center;
-}
-
-.ia-brand-wrapper {
+/* --- SIDEBAR BRAND --- */
+.ia-sidebar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  overflow: hidden;
+  padding: 4px 8px 16px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 12px;
 }
 
-.ia-admin-sidebar.collapsed .ia-brand-wrapper {
-  display: none;
-}
-
-.ia-logo-badge {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 0.95rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
+.ia-admin-sidebar.collapsed .ia-sidebar-brand {
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
-  flex-shrink: 0;
-  letter-spacing: -0.02em;
+  padding: 4px 0 16px 0;
 }
 
-.ia-logo-text-wrap {
-  display: flex;
-  flex-direction: column;
-  white-space: nowrap;
-}
-
-.ia-logo-text-wrap h2 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-.ia-panel-tag {
-  font-size: 0.73rem;
-  color: #64748b;
-  font-weight: 500;
-  margin-top: 2px;
-}
-
-/* Toggle Control Button */
-.ia-toggle-btn {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+.ia-brand-badge {
   width: 36px;
   height: 36px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   flex-shrink: 0;
 }
 
-.ia-toggle-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
-}
-
-.ia-toggle-icon {
-  width: 18px;
-  height: 18px;
-}
-
-/* Navigation Menu Section */
-.ia-menu-section {
-  padding: 24px 16px;
+.ia-brand-text-wrap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  overflow: hidden;
+}
+
+.ia-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ia-brand-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* --- MENU SECTION --- */
+.ia-menu-section {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.ia-admin-sidebar.collapsed .ia-menu-section {
-  padding: 24px 12px;
-  align-items: center;
+.ia-menu-section::-webkit-scrollbar {
+  width: 4px;
+}
+.ia-menu-section::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 4px;
 }
 
 .ia-menu-label-wrap {
-  padding: 0 12px;
-  margin-bottom: 4px;
+  padding: 6px 10px;
 }
 
 .ia-menu-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
+  font-size: 11px;
   font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
 }
 
+/* --- NAVIGATION LIST --- */
 .ia-nav-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 100%;
 }
 
-/* Navigation Menu Buttons */
 .ia-menu-btn {
+  position: relative;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 12px;
   color: #64748b;
-  font-size: 0.92rem;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
   text-align: left;
+  white-space: nowrap;
 }
 
 .ia-admin-sidebar.collapsed .ia-menu-btn {
   justify-content: center;
-  padding: 0;
-  width: 52px;
-  height: 52px;
+  padding: 12px 0;
 }
 
 .ia-menu-btn:hover {
   background: #f8fafc;
-  color: #0f172a;
+  color: #1e293b;
+  border-color: #f1f5f9;
 }
 
+/* Active Menu Item Styling */
 .ia-menu-btn.active {
   background: #eff6ff;
   color: #2563eb;
-  font-weight: 700;
-}
-
-.ia-admin-sidebar.collapsed .ia-menu-btn.active {
-  background: #2563eb;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  border-color: #dbeafe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
 }
 
 .ia-menu-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 
 .ia-menu-btn:hover .ia-menu-icon {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .ia-menu-text {
-  white-space: nowrap;
   flex: 1;
+  letter-spacing: -0.01em;
 }
 
-/* Active Indicator Pill Accent */
+/* Active Indicator */
 .ia-active-indicator {
-  width: 5px;
-  height: 18px;
-  background: #2563eb;
-  border-radius: 4px;
-  position: absolute;
-  right: 12px;
+  width: 6px;
+  height: 6px;
+  background-color: #2563eb;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px #dbeafe;
 }
 
-/* Sidebar Footer & System Status */
+/* --- FOOTER SECTION --- */
 .ia-sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.ia-admin-sidebar.collapsed .ia-sidebar-footer {
-  padding: 16px 12px;
-  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
 }
 
 .ia-footer-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 12px 14px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
 }
 
 .ia-footer-status-dot {
@@ -244,55 +203,58 @@
   height: 9px;
   background-color: #22c55e;
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  box-shadow: 0 0 0 3px #dcfce7;
   flex-shrink: 0;
 }
 
 .ia-footer-info {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .ia-footer-title {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 12px;
   font-weight: 700;
-  color: #0f172a;
+  color: #1e293b;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .ia-footer-desc {
-  margin: 2px 0 0 0;
-  font-size: 0.73rem;
-  color: #64748b;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
-/* Optional Logout Button styling inside sidebar */
+/* Logout Button */
 .ia-logout-btn {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: #fef2f2;
   border: 1px solid #fee2e2;
   border-radius: 12px;
   color: #dc2626;
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .ia-admin-sidebar.collapsed .ia-logout-btn {
   justify-content: center;
-  padding: 0;
-  width: 52px;
-  height: 52px;
+  padding: 12px 0;
 }
 
 .ia-logout-btn:hover {
   background: #fee2e2;
-  border-color: #fecaca;
-  color: #b91c1c;
+  border-color: #fca5a5;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);
 }

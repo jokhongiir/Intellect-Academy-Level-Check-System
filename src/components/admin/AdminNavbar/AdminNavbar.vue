@@ -1,19 +1,28 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { supabase } from '../../../api/supabaseClient'
-import { 
-  ShieldCheckIcon, 
+import {
+  ShieldCheckIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   BellIcon,
   CheckCircleIcon,
-  TrashIcon
+  TrashIcon,
+  Bars3Icon
 } from '@heroicons/vue/24/outline'
 
 defineProps({
   onLogout: {
     type: Function,
     required: true
+  },
+  toggleSidebar: {
+    type: Function,
+    required: true
+  },
+  isCollapsed: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -29,30 +38,38 @@ onMounted(async () => {
     .limit(10)
 
   if (!error && data) {
-    notifications.value = data.map(item => ({
+    notifications.value = data.map((item) => ({
       id: item.id,
       title: 'Yangi test natijasi!',
-      message: `${item.student_name || 'O\'quvchi'} testni yakunladi. Ball: ${item.score ?? 0}/100`,
-      time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      message: `${item.student_name || "O'quvchi"} testni yakunladi. Ball: ${item.score ?? 0}/100`,
+      time: new Date(item.created_at).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
       read: true
     }))
   }
 
   subscription = supabase
     .channel('public:results')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'results' }, payload => {
-      const newResult = payload.new
-      
-      notifications.value.unshift({
-        id: newResult.id,
-        title: 'Yangi test natijasi! 🎉',
-        message: `${newResult.student_name || 'O\'quvchi'} testni tugatdi. Ball: ${newResult.score ?? 0}/100`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        read: false // Yangi xabar kelganda false bo'ladi va animatsiyani yoqadi
-      })
-
-      playNotificationSound()
-    })
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'results' },
+      (payload) => {
+        const newResult = payload.new
+        notifications.value.unshift({
+          id: newResult.id,
+          title: 'Yangi test natijasi! 🎉',
+          message: `${newResult.student_name || "O'quvchi"} testni tugatdi. Ball: ${newResult.score ?? 0}/100`,
+          time: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          read: false
+        })
+        playNotificationSound()
+      }
+    )
     .subscribe()
 })
 
@@ -62,12 +79,14 @@ onUnmounted(() => {
   }
 })
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+const unreadCount = computed(() =>
+  notifications.value.filter((n) => !n.read).length
+)
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
   if (showDropdown.value) {
-    notifications.value.forEach(n => n.read = true)
+    notifications.value.forEach((n) => (n.read = true))
   }
 }
 
@@ -77,58 +96,80 @@ const clearNotifications = () => {
 
 const playNotificationSound = () => {
   try {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+    const audio = new Audio(
+      'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
+    )
     audio.volume = 0.4
     audio.play()
-  } catch (e) {}
+  } catch (e) {
+    // silent fail
+  }
 }
 </script>
 
 <template>
   <header class="admin-navbar">
-    <div class="navbar-brand">
-      <div class="brand-icon-wrapper">
-        <ShieldCheckIcon class="brand-shield" />
-      </div>
-      <div class="brand-info">
-        <h2 class="brand-title">Intellect Academy</h2>
-        <span class="role-badge">Admin Panel</span>
+    <div class="navbar-left">
+      <button
+        type="button"
+        class="toggle-btn"
+        :class="{ active: isCollapsed }"
+        title="Sidebarni ochish/yopish"
+        @click="toggleSidebar"
+      >
+        <Bars3Icon class="icon" />
+      </button>
+
+      <div class="brand">
+        <div class="brand-icon">
+          <ShieldCheckIcon class="shield-icon" />
+        </div>
+        <div class="brand-info">
+          <h2>Intellect Academy</h2>
+          <span class="role-badge">Admin Panel</span>
+        </div>
       </div>
     </div>
-    
-    <div class="navbar-actions">
-      <!-- Bildirishnoma tugmasi -->
-      <div class="notification-container">
-        <button 
-          class="icon-action-btn" 
-          :class="{ 'has-unread': unreadCount > 0 }" 
-          @click="toggleDropdown" 
+
+    <div class="navbar-right">
+      <!-- Notifications -->
+      <div class="notification-wrapper">
+        <button
+          class="icon-btn"
+          :class="{ 'has-unread': unreadCount > 0 }"
           title="Bildirishnomalar"
+          @click="toggleDropdown"
         >
-          <BellIcon class="action-icon" />
-          <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+          <BellIcon class="icon" />
+          <span v-if="unreadCount > 0" class="badge">{{ unreadCount }}</span>
         </button>
 
-        <div v-if="showDropdown" class="notification-dropdown">
+        <div v-if="showDropdown" class="dropdown">
           <div class="dropdown-header">
             <h4>Bildirishnomalar</h4>
-            <button v-if="notifications.length > 0" @click="clearNotifications" class="clear-all-btn">
-              <TrashIcon class="clear-icon" /> Tozalash
+            <button
+              v-if="notifications.length"
+              class="clear-btn"
+              @click="clearNotifications"
+            >
+              <TrashIcon class="clear-icon" />
+              Tozalash
             </button>
           </div>
 
           <div class="dropdown-body">
-            <div v-if="notifications.length === 0" class="no-notifications">
-              Yangi bildirishnomalar yo'q
+            <div v-if="!notifications.length" class="empty">
+              Yangi bildirishnomalar yo‘q
             </div>
-            <div 
-              v-for="item in notifications" 
-              :key="item.id" 
-              class="notification-item"
+
+            <div
+              v-for="item in notifications"
+              :key="item.id"
+              class="notif-item"
               :class="{ unread: !item.read }"
             >
-              <div class="notif-icon-box">
-                <CheckCircleIcon class="notif-success-icon" />
+              <div class="notif-icon">
+                <CheckCircleIcon class="success-icon" />
               </div>
               <div class="notif-content">
                 <p class="notif-title">{{ item.title }}</p>
@@ -142,20 +183,21 @@ const playNotificationSound = () => {
 
       <div class="divider"></div>
 
+      <!-- Admin Profile -->
       <div class="admin-profile">
-        <div class="avatar-wrapper">
-          <UserCircleIcon class="admin-avatar-icon" />
-          <span class="status-dot"></span>
+        <div class="avatar">
+          <UserCircleIcon class="avatar-icon" />
+          <span class="online-dot"></span>
         </div>
-        <div class="admin-meta">
-          <span class="admin-name">Administrator</span>
-          <span class="admin-role">Super Admin</span>
+        <div class="meta">
+          <span class="name">Administrator</span>
+          <span class="role">Super Admin</span>
         </div>
       </div>
 
-      <button @click="onLogout" class="logout-btn" title="Tizimdan chiqish">
-        <ArrowRightOnRectangleIcon class="logout-icon" />
-        <span class="logout-text">Chiqish</span>
+      <button class="logout-btn" title="Tizimdan chiqish" @click="onLogout">
+        <ArrowRightOnRectangleIcon class="icon" />
+        <span>Chiqish</span>
       </button>
     </div>
   </header>
@@ -163,186 +205,174 @@ const playNotificationSound = () => {
 
 <style scoped>
 .admin-navbar {
-  height: 72px;
-  background-color: #ffffff;
+  height: 64px;
+  background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemText, sans-serif;
+  padding: 0 24px;
   position: sticky;
   top: 0;
   z-index: 40;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
 }
 
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.brand-icon-wrapper {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-}
-
-.brand-shield {
-  width: 24px;
-  height: 24px;
-  color: #ffffff;
-}
-
-.brand-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.brand-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.role-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  color: #2563eb;
-  background-color: #eff6ff;
-  padding: 2px 8px;
-  border-radius: 20px;
-  width: fit-content;
-  letter-spacing: 0.02em;
-}
-
-.navbar-actions {
+.navbar-left {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.notification-container {
-  position: relative;
-}
-
-.icon-action-btn {
-  position: relative;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+.toggle-btn {
   width: 40px;
   height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #64748b;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
-.icon-action-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+.toggle-btn:hover,
+.toggle-btn.active {
+  background: #e0f2fe;
+  color: #0284c7;
 }
 
-/* MUHIM: Qizil yoniq-o'chib turish animatsiyasi */
-.icon-action-btn.has-unread {
-  background-color: #fef2f2 !important;
-  border-color: #fca5a5 !important;
-  color: #dc2626 !important;
-  animation: pulseGlow 1.5s infinite !important;
-}
-
-@keyframes pulseGlow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
-}
-
-.action-icon {
+.icon {
   width: 20px;
   height: 20px;
 }
 
-.notification-badge {
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+}
+
+.shield-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.brand-info h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.role-badge {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.notification-wrapper {
+  position: relative;
+}
+
+.icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.icon-btn.has-unread {
+  color: #2563eb;
+}
+
+.badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  background-color: #ef4444;
+  top: 6px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
   color: white;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
-  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.notification-dropdown {
+.dropdown {
   position: absolute;
-  top: 50px;
+  top: calc(100% + 8px);
   right: 0;
-  width: 340px;
-  background: #ffffff;
+  width: 360px;
+  background: white;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
   overflow: hidden;
-  animation: dropdownFadeIn 0.2s ease;
-}
-
-@keyframes dropdownFadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  z-index: 50;
 }
 
 .dropdown-header {
-  padding: 14px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .dropdown-header h4 {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0f172a;
 }
 
-.clear-all-btn {
-  background: transparent;
-  border: none;
-  font-size: 12px;
-  color: #64748b;
-  cursor: pointer;
+.clear-btn {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-weight: 500;
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
 }
 
-.clear-all-btn:hover {
+.clear-btn:hover {
   color: #ef4444;
 }
 
@@ -352,146 +382,149 @@ const playNotificationSound = () => {
 }
 
 .dropdown-body {
-  max-height: 320px;
+  max-height: 360px;
   overflow-y: auto;
 }
 
-.no-notifications {
-  padding: 24px;
+.empty {
+  padding: 32px 16px;
   text-align: center;
   color: #94a3b8;
   font-size: 13px;
 }
 
-.notification-item {
-  padding: 12px 16px;
+.notif-item {
   display: flex;
   gap: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.2s;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.15s;
 }
 
-.notification-item:hover {
+.notif-item:hover {
   background: #f8fafc;
 }
 
-.notification-item.unread {
-  background: #eff6ff;
+.notif-item.unread {
+  background: #f0f9ff;
 }
 
-.notif-icon-box {
-  width: 32px;
-  height: 32px;
-  background: #dcfce7;
-  border-radius: 50%;
+.notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ecfdf5;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.notif-success-icon {
+.success-icon {
   width: 18px;
   height: 18px;
-  color: #22c55e;
+  color: #10b981;
 }
 
 .notif-content {
   flex: 1;
+  min-width: 0;
 }
 
 .notif-title {
-  margin: 0 0 2px 0;
+  margin: 0 0 2px;
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #0f172a;
 }
 
 .notif-text {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .notif-time {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
 }
 
 .divider {
   width: 1px;
   height: 28px;
-  background-color: #e2e8f0;
+  background: #e2e8f0;
 }
 
 .admin-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 12px 6px 6px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 30px;
+  gap: 10px;
 }
 
-.avatar-wrapper {
+.avatar {
   position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.admin-avatar-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   color: #64748b;
 }
 
-.status-dot {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 9px;
-  height: 9px;
-  background-color: #22c55e;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
+.avatar-icon {
+  width: 36px;
+  height: 36px;
 }
 
-.admin-meta {
+.online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid white;
+}
+
+.meta {
   display: flex;
   flex-direction: column;
 }
 
-.admin-name {
+.name {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
-  line-height: 1.2;
+  color: #0f172a;
 }
 
-.admin-role {
+.role {
   font-size: 11px;
   color: #64748b;
-  font-weight: 500;
 }
 
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fee2e2;
-  padding: 10px 16px;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
   border-radius: 10px;
+  background: #fef2f2;
+  color: #ef4444;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
-.logout-icon {
-  width: 18px;
-  height: 18px;
+.logout-btn:hover {
+  background: #fee2e2;
+}
+
+@media (max-width: 768px) {
+  .brand-info,
+  .meta,
+  .logout-btn span {
+    display: none;
+  }
 }
 </style>

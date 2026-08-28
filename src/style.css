@@ -5,6 +5,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 body {
+  height: 100vh;
   background-color: #f4f6f9;
   color: #333;
 }
