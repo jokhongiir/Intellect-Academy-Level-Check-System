@@ -6,22 +6,29 @@ import StudentDashboard from '../views/StudentDashboard/StudentDashboard.vue'
 
 const router = useRouter()
 const currentStudent = ref(null)
-const examTimeLeft = ref(null) 
+const examTimeLeft = ref(null)
 
 onMounted(() => {
   const stored = localStorage.getItem('currentStudent')
+
   if (!stored) {
     router.push('/student-login')
     return
   }
-  currentStudent.value = JSON.parse(stored)
+
+  try {
+    currentStudent.value = JSON.parse(stored)
+  } catch (err) {
+    console.error('Student data parse error:', err)
+    localStorage.removeItem('currentStudent')
+    router.push('/student-login')
+  }
 })
 
 const handleLogout = () => {
   localStorage.removeItem('currentStudent')
   router.push('/student-login')
 }
-
 
 const handleTimeUpdate = (newTime) => {
   examTimeLeft.value = newTime
@@ -30,18 +37,15 @@ const handleTimeUpdate = (newTime) => {
 
 <template>
   <div class="student-layout-container" v-if="currentStudent">
-   
-    <StudentNavbar 
+    <StudentNavbar
       :studentName="currentStudent.full_name"
       :level="currentStudent.level"
       :timeLeft="examTimeLeft"
       :onLogout="handleLogout"
     />
 
-   
     <div class="student-body">
       <main class="student-content">
-       
         <StudentDashboard @update:timeLeft="handleTimeUpdate" />
       </main>
     </div>

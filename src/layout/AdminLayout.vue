@@ -5,6 +5,7 @@ import AdminNavbar from '../components/admin/AdminNavbar/AdminNavbar.vue'
 import AddStudent from '../components/admin/AddStudent/AddStudent.vue'
 import AddBeginner from '../components/admin/AddBeginner/AddBeginner.vue'
 import AddElementary from '../components/admin/AddElemantary/AddElemantary.vue'
+import AddIntermediate from '../components/admin/AddIntermediate/AddIntermediate.vue'
 import AdminResults from '../components/admin/AdminResults/AdminResults.vue'
 
 const activeTab = ref('dashboard')
@@ -32,11 +33,19 @@ const onLogout = () => {
 
 <template>
   <div class="admin-layout">
-    <AdminSidebar :active-tab="activeTab" :set-active-tab="setActiveTab" :on-logout="onLogout"
-      :is-collapsed="isCollapsed" />
+    <AdminSidebar
+      :active-tab="activeTab"
+      :set-active-tab="setActiveTab"
+      :on-logout="onLogout"
+      :is-collapsed="isCollapsed"
+    />
 
     <div class="admin-main">
-      <AdminNavbar :on-logout="onLogout" :toggle-sidebar="toggleSidebar" :is-collapsed="isCollapsed" />
+      <AdminNavbar
+        :on-logout="onLogout"
+        :toggle-sidebar="toggleSidebar"
+        :is-collapsed="isCollapsed"
+      />
 
       <main class="admin-content">
         <!-- Dashboard -->
@@ -63,6 +72,11 @@ const onLogout = () => {
           <AddElementary />
         </section>
 
+        <!-- Intermediate Tests -->
+        <section v-else-if="activeTab === 'addIntermediate'" class="page-section">
+          <AddIntermediate />
+        </section>
+
         <!-- Results -->
         <section v-else-if="activeTab === 'results'" class="page-section">
           <AdminResults />
@@ -76,9 +90,7 @@ const onLogout = () => {
 .admin-layout {
   display: flex;
   height: 100vh;
-  /* muhim: min-height emas, height */
   overflow: hidden;
-  /* layout o‘zi scroll bo‘lmasin */
   background: #f8fafc;
 }
 
@@ -89,19 +101,15 @@ const onLogout = () => {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  /* muhim */
 }
 
 .admin-content {
   flex: 1;
   padding: 32px;
   overflow: hidden;
-  /* o‘zi scroll bo‘lmasin */
   box-sizing: border-box;
   display: flex;
-  /* qo‘shildi */
   flex-direction: column;
-  /* qo‘shildi */
   min-height: 0;
 }
 

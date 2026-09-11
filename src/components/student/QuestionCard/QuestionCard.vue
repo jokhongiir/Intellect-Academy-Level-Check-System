@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import './QuestionCard.css'
 
 /* =========================================
-    1. TASHQARIDAN KELADIGAN MA'LUMOTLAR (PROPS)
+    1. PROPS
 ========================================= */
 const props = defineProps({
   questionData: {
@@ -21,12 +21,12 @@ const props = defineProps({
 })
 
 /* =========================================
-    2. OTA KOMPONENTGA JAVOBNI YUBORISH (EMITS)
+    2. EMITS
 ========================================= */
 const emit = defineEmits(['update:modelValue'])
 
 /* =========================================
-    3. IKKI TOMONLAMA BOG'LANISH (v-model)
+    3. v-model
 ========================================= */
 const localValue = computed({
   get: () => props.modelValue,
@@ -34,12 +34,12 @@ const localValue = computed({
 })
 
 /* =========================================
-    4. TEST VARIANTLARI (A, B, C, D)
+    4. OPTIONS
 ========================================= */
 const options = ['A', 'B', 'C', 'D']
 
 /* =========================================
-    5. SAVOL TURINI XAVFSIZ (NORMALIZATSIYA QILINGAN)
+    5. TYPE NORMALIZATION
 ========================================= */
 const normalizedType = computed(() =>
   String(props.questionData?.section_type || '').trim().toLowerCase()
@@ -55,7 +55,7 @@ const isShortAnswerType = computed(() => normalizedType.value === 'short_answer'
 const isWritingType = computed(() => normalizedType.value === 'writing')
 
 /* =========================================
-    6. SAVOL TURINI CHIROYLI MATNGA O'TKAZISH
+    6. TYPE LABELS
 ========================================= */
 const TYPE_LABELS = {
   multiple_choice: 'Multiple Choice',
@@ -72,21 +72,21 @@ const formatType = computed(() => {
 })
 
 /* =========================================
-    7. VARIANT MATNINI OLISH
+    7. OPTION TEXT
 ========================================= */
 const getOptionText = (letter) => {
   return props.questionData?.[`option_${letter.toLowerCase()}`] || ''
 }
 
 /* =========================================
-    8. RADIO GURUH NOMI (har doim noyob)
+    8. RADIO GROUP NAME
 ========================================= */
 const radioGroupName = computed(
   () => `question-${props.questionNumber}-${props.questionData?.id ?? 'na'}`
 )
 
 /* =========================================
-    9. YOZMA ISHLAR UCHUN SO'ZLARNI SANASH
+    9. WORD COUNT (Writing)
 ========================================= */
 const wordCount = computed(() => {
   const value = String(props.modelValue || '').trim()
@@ -98,7 +98,7 @@ const maxWords = computed(() => props.questionData?.max_words || 70)
 const isOverLimit = computed(() => wordCount.value > maxWords.value)
 
 /* =========================================
-    10. VARIANT TANLANGANLIGINI TEKSHIRISH
+    10. SELECTED CHECK
 ========================================= */
 const isSelected = (option) => {
   return String(props.modelValue || '').trim().toUpperCase() === option
@@ -107,10 +107,7 @@ const isSelected = (option) => {
 
 <template>
   <article class="question-card">
-
-    <!-- =========================
-         SAVOL SARLAVHASI (HEADER)
-    ========================== -->
+    <!-- HEADER -->
     <header class="question-header">
       <div class="question-header-left">
         <div class="question-number">
@@ -131,10 +128,7 @@ const isSelected = (option) => {
       </span>
     </header>
 
-
-    <!-- =========================
-          O'QISH MATNI (PASSAGE)
-    ========================== -->
+    <!-- PASSAGE -->
     <section v-if="questionData?.passage_text" class="passage-box">
       <div class="passage-title">
         <div class="passage-icon">
@@ -155,10 +149,7 @@ const isSelected = (option) => {
       </div>
     </section>
 
-
-    <!-- =========================
-         SAVOL TANA QISMI (BODY)
-    ========================== -->
+    <!-- BODY -->
     <section class="question-body">
       <div class="question-text-wrapper">
         <span class="question-text-label">Question</span>
@@ -167,8 +158,7 @@ const isSelected = (option) => {
         </h2>
       </div>
 
-
-      <!-- 1. TEST (MULTIPLE CHOICE / READING) -->
+      <!-- MULTIPLE CHOICE / READING -->
       <div v-if="isChoiceType" class="options-list" role="radiogroup">
         <label
           v-for="option in options"
@@ -196,8 +186,7 @@ const isSelected = (option) => {
         </label>
       </div>
 
-
-      <!-- 2. ESLATMA YOKI XULOSA TO'LDIRISH (NOTE / SUMMARY) -->
+      <!-- NOTE / SUMMARY COMPLETION -->
       <div v-else-if="isCompletionType" class="completion-box">
         <div class="answer-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -214,8 +203,7 @@ const isSelected = (option) => {
         />
       </div>
 
-
-      <!-- 3. QISQA JAVOB (SHORT ANSWER) -->
+      <!-- SHORT ANSWER -->
       <div v-else-if="isShortAnswerType" class="short-answer-box">
         <div class="answer-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -231,8 +219,7 @@ const isSelected = (option) => {
         />
       </div>
 
-
-      <!-- 4. YOZMA MASHQ (WRITING) -->
+      <!-- WRITING -->
       <div v-else-if="isWritingType" class="writing-box">
         <textarea
           class="writing-textarea"
@@ -258,8 +245,7 @@ const isSelected = (option) => {
         </div>
       </div>
 
-
-      <!-- 5. NOMA'LUM YOKI XATO TUR -->
+      <!-- UNKNOWN TYPE -->
       <div v-else class="unsupported-question">
         <div class="unsupported-icon">!</div>
         <div>
@@ -267,8 +253,6 @@ const isSelected = (option) => {
           <p>Tur: {{ questionData?.section_type || 'kiritilmagan' }}</p>
         </div>
       </div>
-
     </section>
-
   </article>
 </template>

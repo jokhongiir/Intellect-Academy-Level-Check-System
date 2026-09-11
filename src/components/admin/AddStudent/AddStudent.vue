@@ -41,7 +41,7 @@ const alertModal = ref({
   isOpen: false,
   title: '',
   message: '',
-  type: 'info' // success | error
+  type: 'info'
 })
 
 /* ===================== COMPUTED ===================== */
@@ -84,6 +84,13 @@ const formatSectionName = (type) => {
     writing: 'Writing Task'
   }
   return names[type] || type
+}
+
+const getTableNameByLevel = (level) => {
+  const normalized = String(level || 'beginner').toLowerCase()
+  if (normalized === 'elementary') return 'elementary_tests'
+  if (normalized === 'intermediate') return 'intermediate_tests'
+  return 'beginner_tests'
 }
 
 const showAlert = (title, message, type = 'info') => {
@@ -162,8 +169,7 @@ const handleCreateStudent = async () => {
       throw new Error('Full name is required')
     }
 
-    const tableName =
-      level.value === 'elementary' ? 'elementary_tests' : 'beginner_tests'
+    const tableName = getTableNameByLevel(level.value)
 
     const { data: levelTests, error: qError } = await supabase
       .from(tableName)
@@ -264,8 +270,7 @@ const openStudentDetailModal = async (student, event) => {
 
   detailLoading.value = true
   try {
-    const tableName =
-      student.level === 'elementary' ? 'elementary_tests' : 'beginner_tests'
+    const tableName = getTableNameByLevel(student.level)
 
     const { data, error } = await supabase
       .from(tableName)
@@ -302,6 +307,7 @@ const copyToClipboard = (text, type, event) => {
 onMounted(() => {
   fetchStudents()
 })
+
 </script>
 
 <template>
@@ -350,6 +356,13 @@ onMounted(() => {
           @click="selectedFilterLevel = 'elementary'"
         >
           Elementary
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: selectedFilterLevel === 'intermediate' }"
+          @click="selectedFilterLevel = 'intermediate'"
+        >
+          Intermediate
         </button>
       </div>
     </div>
@@ -470,6 +483,7 @@ onMounted(() => {
             <select v-model="level" required>
               <option value="beginner">Beginner</option>
               <option value="elementary">Elementary</option>
+              <option value="intermediate">Intermediate</option>
             </select>
           </div>
 

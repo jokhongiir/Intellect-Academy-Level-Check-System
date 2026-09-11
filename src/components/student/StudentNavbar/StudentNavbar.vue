@@ -1,18 +1,14 @@
 <script setup>
 import './StudentNavbar.css'
 import logo from '../../../assets/logo.png'
-import { OhVueIcon, addIcons } from "oh-vue-icons"
-import { 
-  RiTimerLine, 
-  RiUserLine, 
-  RiLogoutBoxRLine 
-} from "oh-vue-icons/icons"
-
-addIcons(
-  RiTimerLine, 
-  RiUserLine, 
+import { OhVueIcon, addIcons } from 'oh-vue-icons'
+import {
+  RiTimerLine,
+  RiUserLine,
   RiLogoutBoxRLine
-)
+} from 'oh-vue-icons/icons'
+
+addIcons(RiTimerLine, RiUserLine, RiLogoutBoxRLine)
 
 defineProps({
   studentName: {
@@ -36,10 +32,10 @@ defineProps({
 
 <template>
   <nav class="ia-student-navbar">
-    <!-- Brand / Logo Section -->
+    <!-- Brand -->
     <div class="ia-nav-brand">
       <div class="ia-brand-icon-wrapper">
-        <img :src="logo" alt="Intellect Academy Logo" class="ia-brand-logo-img">
+        <img :src="logo" alt="Intellect Academy Logo" class="ia-brand-logo-img" />
       </div>
       <div class="ia-brand-text">
         <h1>Intellect Academy</h1>
@@ -47,7 +43,7 @@ defineProps({
       </div>
     </div>
 
-    <!-- Timer (Visible only during active exam) -->
+    <!-- Timer -->
     <div class="ia-nav-center-timer" v-if="timeLeft">
       <div class="ia-timer-badge">
         <OhVueIcon name="ri-timer-line" class="ia-timer-icon" />
@@ -55,7 +51,7 @@ defineProps({
       </div>
     </div>
 
-    <!-- Right Section (Profile & Logout) -->
+    <!-- Profile + Logout -->
     <div class="ia-nav-right">
       <div class="ia-student-profile-info">
         <div class="ia-profile-avatar">
@@ -63,10 +59,12 @@ defineProps({
         </div>
         <div class="ia-profile-details">
           <span class="ia-student-name">{{ studentName }}</span>
-          <span class="ia-level-badge" :class="level.toLowerCase()">{{ level }}</span>
+          <span class="ia-level-badge" :class="level?.toLowerCase()">
+            {{ level }}
+          </span>
         </div>
       </div>
-      
+
       <button @click="onLogout" class="ia-logout-btn" title="Log Out">
         <OhVueIcon name="ri-logout-box-r-line" />
         <span>Log Out</span>

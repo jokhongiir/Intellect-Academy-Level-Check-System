@@ -1,16 +1,16 @@
 <script setup>
-import { ref, onMounted, computed, onUnmounted, defineEmits } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../api/supabaseClient'
 import QuestionCard from '../../components/student/QuestionCard/QuestionCard.vue'
-import { OhVueIcon, addIcons } from "oh-vue-icons"
-import { 
-  RiLockPasswordLine, 
-  RiLoader4Line, 
-  RiErrorWarningLine, 
-  RiArrowLeftLine, 
-  RiArrowRightLine, 
-  RiSendPlaneLine, 
+import { OhVueIcon, addIcons } from 'oh-vue-icons'
+import {
+  RiLockPasswordLine,
+  RiLoader4Line,
+  RiErrorWarningLine,
+  RiArrowLeftLine,
+  RiArrowRightLine,
+  RiSendPlaneLine,
   RiBookOpenLine,
   RiCheckboxCircleLine,
   RiInformationLine,
@@ -18,16 +18,16 @@ import {
   RiQuestionMark,
   RiPlayCircleLine,
   RiShieldCheckLine
-} from "oh-vue-icons/icons"
+} from 'oh-vue-icons/icons'
 import './StudentDashboard.css'
 
 addIcons(
-  RiLockPasswordLine, 
-  RiLoader4Line, 
-  RiErrorWarningLine, 
-  RiArrowLeftLine, 
-  RiArrowRightLine, 
-  RiSendPlaneLine, 
+  RiLockPasswordLine,
+  RiLoader4Line,
+  RiErrorWarningLine,
+  RiArrowLeftLine,
+  RiArrowRightLine,
+  RiSendPlaneLine,
   RiBookOpenLine,
   RiCheckboxCircleLine,
   RiInformationLine,
@@ -66,13 +66,21 @@ const showNotification = (message, type = 'info') => {
   }, 4000)
 }
 
+/* ===================== HELPER ===================== */
+const getTableNameByLevel = (level) => {
+  const normalized = String(level || 'beginner').toLowerCase()
+  if (normalized === 'elementary') return 'elementary_tests'
+  if (normalized === 'intermediate') return 'intermediate_tests'
+  return 'beginner_tests'
+}
+
 onMounted(async () => {
   const storedStudent = localStorage.getItem('currentStudent')
   if (!storedStudent) {
     router.push('/student-login')
     return
   }
-  
+
   student.value = JSON.parse(storedStudent)
 
   try {
@@ -87,7 +95,7 @@ onMounted(async () => {
       localStorage.setItem('currentStudent', JSON.stringify(student.value))
     }
   } catch (err) {
-    console.error("Error updating student status:", err)
+    console.error('Error updating student status:', err)
   }
 
   if (student.value.is_submitted) {
@@ -108,21 +116,21 @@ onUnmounted(() => {
 const startExam = () => {
   isStarted.value = true
   startTimer()
-  showNotification("Exam successfully started! Good luck.", "success")
+  showNotification('Exam successfully started! Good luck.', 'success')
 }
 
 const fetchAssignedTests = async () => {
   try {
     loading.value = true
-    
+
     const assignedIds = student.value.assigned_questions
 
     if (!assignedIds || assignedIds.length === 0) {
-      throw new Error("Sizga hali savollar biriktirilmagan! Administratorga murojaat qiling.")
+      throw new Error('Sizga hali savollar biriktirilmagan! Administratorga murojaat qiling.')
     }
 
-    // Determine correct table based on student level
-    const tableName = student.value.level === 'elementary' ? 'elementary_tests' : 'beginner_tests'
+    // Intermediate / Elementary / Beginner ni to‘g‘ri tanlaydi
+    const tableName = getTableNameByLevel(student.value.level)
 
     const { data, error } = await supabase
       .from(tableName)
@@ -132,14 +140,17 @@ const fetchAssignedTests = async () => {
     if (error) throw error
 
     if (!data || data.length === 0) {
-      throw new Error("Biriktirilgan savollar bazadan topilmadi.")
+      throw new Error('Biriktirilgan savollar bazadan topilmadi.')
     }
 
-    tests.value = assignedIds.map(id => data.find(q => q.id === id)).filter(Boolean)
+    // Original tartibni saqlaymiz
+    tests.value = assignedIds
+      .map((id) => data.find((q) => String(q.id) === String(id)))
+      .filter(Boolean)
 
   } catch (err) {
-    errorMsg.value = "Failed to load questions: " + err.message
-    showNotification("Could not load questions.", "error")
+    errorMsg.value = 'Failed to load questions: ' + err.message
+    showNotification('Could not load questions.', 'error')
   } finally {
     loading.value = false
   }
@@ -188,7 +199,7 @@ const submitTest = () => {
 
 const confirmSubmission = () => {
   showConfirmModal.value = false
-  executeAutoSubmit("Exam successfully submitted!")
+  executeAutoSubmit('Exam successfully submitted!')
 }
 
 const cancelSubmission = () => {
@@ -207,12 +218,14 @@ const executeAutoSubmit = async (alertMessage) => {
   let wrongCount = 0
   let totalChecked = 0
 
-  tests.value.forEach(test => {
+  tests.value.forEach((test) => {
     if (test.correct_answer) {
       totalChecked++
-      const studentAns = answers.value[test.id] ? String(answers.value[test.id]).trim().toLowerCase() : ''
+      const studentAns = answers.value[test.id]
+        ? String(answers.value[test.id]).trim().toLowerCase()
+        : ''
       const realAns = String(test.correct_answer).trim().toLowerCase()
-      
+
       if (studentAns === realAns) {
         correctCount++
       } else {
@@ -239,9 +252,8 @@ const executeAutoSubmit = async (alertMessage) => {
       .update({ is_submitted: true })
       .eq('id', student.value.id)
 
-    const { error: resultError } = await supabase
-      .from('results')
-      .upsert([
+    const { error: resultError } = await supabase.from('results').upsert(
+      [
         {
           student_id: student.value.id,
           student_name: student.value.full_name || 'Nomaʼlum',
@@ -252,20 +264,21 @@ const executeAutoSubmit = async (alertMessage) => {
           wrong_answers: wrongCount,
           exam_result: resultPayload
         }
-      ], { onConflict: 'student_id' })
+      ],
+      { onConflict: 'student_id' }
+    )
 
     if (resultError) throw resultError
 
     student.value.is_submitted = true
     localStorage.setItem('currentStudent', JSON.stringify(student.value))
-    
-    if (alertMessage) {
-      showNotification(alertMessage, "success")
-    }
 
+    if (alertMessage) {
+      showNotification(alertMessage, 'success')
+    }
   } catch (err) {
-    console.error("Error saving result to results table:", err.message)
-    showNotification("Exam completed, but failed to save results.", "error")
+    console.error('Error saving result to results table:', err.message)
+    showNotification('Exam completed, but failed to save results.', 'error')
   }
 }
 
@@ -282,8 +295,16 @@ const handleLogout = () => {
   <div class="ia-student-dashboard">
     <transition name="toast">
       <div v-if="notification.show" class="ia-toast-notification" :class="notification.type">
-        <OhVueIcon v-if="notification.type === 'success'" name="ri-checkbox-circle-line" class="ia-toast-icon success" />
-        <OhVueIcon v-else-if="notification.type === 'error'" name="ri-close-circle-line" class="ia-toast-icon error" />
+        <OhVueIcon
+          v-if="notification.type === 'success'"
+          name="ri-checkbox-circle-line"
+          class="ia-toast-icon success"
+        />
+        <OhVueIcon
+          v-else-if="notification.type === 'error'"
+          name="ri-close-circle-line"
+          class="ia-toast-icon error"
+        />
         <OhVueIcon v-else name="ri-information-line" class="ia-toast-icon info" />
         <span>{{ notification.message }}</span>
       </div>
@@ -296,7 +317,10 @@ const handleLogout = () => {
             <OhVueIcon name="ri-question-mark" scale="1.8" />
           </div>
           <h3>Finish the Exam?</h3>
-          <p>Are you sure you want to submit your answers? Once confirmed, you will not be able to change them.</p>
+          <p>
+            Are you sure you want to submit your answers? Once confirmed, you will not be able to
+            change them.
+          </p>
           <div class="ia-modal-actions">
             <button @click="cancelSubmission" class="ia-modal-btn cancel">Continue Exam</button>
             <button @click="confirmSubmission" class="ia-modal-btn confirm">Yes, Submit</button>
@@ -312,7 +336,8 @@ const handleLogout = () => {
         </div>
         <h2>Exam Completed!</h2>
         <p class="ia-result-subtitle">
-          You have successfully completed this exam. For security reasons, the session is now closed and your results have been sent to your instructor.
+          You have successfully completed this exam. For security reasons, the session is now closed
+          and your results have been sent to your instructor.
         </p>
         <button @click="handleLogout" class="ia-logout-btn">Log Out</button>
       </div>
@@ -338,23 +363,32 @@ const handleLogout = () => {
         </div>
         <h2>Exam Rules & Guidelines</h2>
         <p class="ia-rules-desc">Please review the following guidelines before starting the test:</p>
-        
+
         <ul class="ia-rules-list">
           <li>
-            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" /> 
+            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" />
             <span><strong>Time Limit:</strong> You have 45 minutes to complete the exam.</span>
           </li>
           <li>
-            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" /> 
-            <span><strong>Auto-Submit:</strong> Once the timer expires, your answers will be automatically submitted.</span>
+            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" />
+            <span
+              ><strong>Auto-Submit:</strong> Once the timer expires, your answers will be
+              automatically submitted.</span
+            >
           </li>
           <li>
-            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" /> 
-            <span><strong>Single Attempt:</strong> Re-entering or modifying answers after submission is restricted.</span>
+            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" />
+            <span
+              ><strong>Single Attempt:</strong> Re-entering or modifying answers after submission is
+              restricted.</span
+            >
           </li>
           <li>
-            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" /> 
-            <span><strong>Navigation:</strong> You can freely move back and forth between questions.</span>
+            <OhVueIcon name="ri-shield-check-line" class="ia-rule-check" />
+            <span
+              ><strong>Navigation:</strong> You can freely move back and forth between
+              questions.</span
+            >
           </li>
         </ul>
 
@@ -367,19 +401,23 @@ const handleLogout = () => {
       <div v-else class="ia-exam-container">
         <div class="ia-exam-header-info">
           <div class="ia-progress-meta">
-            <span>Question <strong>{{ currentIndex + 1 }}</strong> / {{ tests.length }}</span>
-            <span class="ia-progress-percentage">{{ Math.round(((currentIndex + 1) / tests.length) * 100) }}%</span>
+            <span
+              >Question <strong>{{ currentIndex + 1 }}</strong> / {{ tests.length }}</span
+            >
+            <span class="ia-progress-percentage"
+              >{{ Math.round(((currentIndex + 1) / tests.length) * 100) }}%</span
+            >
           </div>
           <div class="ia-progress-track">
-            <div 
-              class="ia-progress-fill" 
+            <div
+              class="ia-progress-fill"
               :style="{ width: `${((currentIndex + 1) / tests.length) * 100}%` }"
             ></div>
           </div>
         </div>
 
         <div class="ia-question-wrapper">
-          <QuestionCard 
+          <QuestionCard
             v-if="currentQuestion"
             :questionData="currentQuestion"
             :questionNumber="currentIndex + 1"
@@ -392,7 +430,11 @@ const handleLogout = () => {
             <OhVueIcon name="ri-arrow-left-line" /> Previous
           </button>
 
-          <button v-if="currentIndex < tests.length - 1" @click="nextQuestion" class="ia-nav-btn primary">
+          <button
+            v-if="currentIndex < tests.length - 1"
+            @click="nextQuestion"
+            class="ia-nav-btn primary"
+          >
             Next <OhVueIcon name="ri-arrow-right-line" />
           </button>
 

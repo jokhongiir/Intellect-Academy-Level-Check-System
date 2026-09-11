@@ -69,6 +69,13 @@ const normalizeAnswer = (answer) => {
   return String(answer).trim().toUpperCase()
 }
 
+const getTableNameByLevel = (level) => {
+  const normalized = String(level || 'beginner').toLowerCase()
+  if (normalized === 'elementary') return 'elementary_tests'
+  if (normalized === 'intermediate') return 'intermediate_tests'
+  return 'beginner_tests'
+}
+
 /* ===================== FETCH ===================== */
 const fetchResults = async () => {
   loading.value = true
@@ -138,7 +145,7 @@ const openStudentDetails = async (item) => {
     }
 
     const studentLevel = (studentData?.level || item.level || 'beginner').toLowerCase()
-    const tableName = studentLevel === 'elementary' ? 'elementary_tests' : 'beginner_tests'
+    const tableName = getTableNameByLevel(studentLevel)
 
     const { data: testsData, error: testsError } = await supabase
       .from(tableName)
@@ -464,6 +471,7 @@ const filteredResults = computed(() => {
           <option value="all">All Levels</option>
           <option value="beginner">Beginner</option>
           <option value="elementary">Elementary</option>
+          <option value="intermediate">Intermediate</option>
         </select>
       </div>
     </div>

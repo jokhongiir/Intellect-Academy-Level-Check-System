@@ -31,6 +31,7 @@ const menuItems = [
   { id: 'addStudent', label: 'Add Students', icon: UserPlusIcon },
   { id: 'addBeginner', label: 'Beginner Tests', icon: AcademicCapIcon },
   { id: 'addElementary', label: 'Elementary Tests', icon: AcademicCapIcon },
+  { id: 'addIntermediate', label: 'Intermediate Tests', icon: AcademicCapIcon },
   { id: 'results', label: 'Results & Analytics', icon: ChartBarIcon }
 ]
 </script>
