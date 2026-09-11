@@ -25,13 +25,8 @@ const props = defineProps({
 ========================================= */
 const emit = defineEmits(['update:modelValue'])
 
-
 /* =========================================
     3. IKKI TOMONLAMA BOG'LANISH (v-model)
-    Radio, text va textarea inputlar shu orqali ishlaydi —
-    :value + @input o'rniga v-model ishlatish xatolarga
-    kamroq yo'l qoldiradi (masalan, radio holatining
-    yangilanmay qolishi).
 ========================================= */
 const localValue = computed({
   get: () => props.modelValue,
@@ -45,10 +40,6 @@ const options = ['A', 'B', 'C', 'D']
 
 /* =========================================
     5. SAVOL TURINI XAVFSIZ (NORMALIZATSIYA QILINGAN)
-    HOLDA OLISH
-    Ma'lumotlar bazasidan section_type katta harf bilan
-    yoki bo'sh joy bilan kelib qolsa ham solishtirishlar
-    ishlashi uchun.
 ========================================= */
 const normalizedType = computed(() =>
   String(props.questionData?.section_type || '').trim().toLowerCase()
@@ -67,11 +58,11 @@ const isWritingType = computed(() => normalizedType.value === 'writing')
     6. SAVOL TURINI CHIROYLI MATNGA O'TKAZISH
 ========================================= */
 const TYPE_LABELS = {
-  multiple_choice: 'Multple Choice',
-  reading: "Reading Comprahansion",
-  note_completion: "Note complation",
-  summary_completion: 'XULOSA QILISH',
-  short_answer: 'QISQA JAVOB',
+  multiple_choice: 'Multiple Choice',
+  reading: 'Reading Comprehension',
+  note_completion: 'Note Completion',
+  summary_completion: 'Summary Completion',
+  short_answer: 'Short Answer',
   writing: 'Writing'
 }
 
@@ -88,13 +79,7 @@ const getOptionText = (letter) => {
 }
 
 /* =========================================
-    8. RADIO GURUH NOMI
-    MUHIM: nom faqat questionData.id ga bog'liq bo'lsa,
-    id bo'lmagan/bir xil bo'lgan hollarda turli savollarning
-    radio guruhlari bir-biriga aralashib ketishi mumkin
-    (bitta sahifada bir nechta savol bir vaqtda ko'rsatilganda,
-    masalan Reading bo'limida). Shuning uchun questionNumber
-    bilan birga ishlatib, nomni har doim noyob qilamiz.
+    8. RADIO GURUH NOMI (har doim noyob)
 ========================================= */
 const radioGroupName = computed(
   () => `question-${props.questionNumber}-${props.questionData?.id ?? 'na'}`
@@ -116,7 +101,7 @@ const isOverLimit = computed(() => wordCount.value > maxWords.value)
     10. VARIANT TANLANGANLIGINI TEKSHIRISH
 ========================================= */
 const isSelected = (option) => {
-  return String(props.modelValue || '').toUpperCase() === option
+  return String(props.modelValue || '').trim().toUpperCase() === option
 }
 </script>
 
@@ -161,7 +146,8 @@ const isSelected = (option) => {
         <div>
           <span class="passage-label">Read it</span>
           <p class="passage-description">
-            Read the text carefully before answering.</p>
+            Read the text carefully before answering.
+          </p>
         </div>
       </div>
       <div class="passage-content">
@@ -184,11 +170,20 @@ const isSelected = (option) => {
 
       <!-- 1. TEST (MULTIPLE CHOICE / READING) -->
       <div v-if="isChoiceType" class="options-list" role="radiogroup">
-        <label v-for="option in options" :key="`${radioGroupName}-${option}`" class="option-item"
-          :class="{ selected: isSelected(option) }">
-          <input type="radio" :name="radioGroupName" :value="option" v-model="localValue" />
+        <label
+          v-for="option in options"
+          :key="`${radioGroupName}-${option}`"
+          class="option-item"
+          :class="{ selected: isSelected(option) }"
+        >
+          <input
+            type="radio"
+            :name="radioGroupName"
+            :value="option"
+            v-model="localValue"
+          />
           <span class="custom-radio">
-            <span v-if="isSelected(option)" class="radio-dot"></span>
+            <span class="radio-dot"></span>
           </span>
           <span class="option-letter">{{ option }}</span>
           <span class="option-text">{{ getOptionText(option) }}</span>
@@ -210,8 +205,13 @@ const isSelected = (option) => {
             <path d="M8 9h8M8 13h6M8 17h4" />
           </svg>
         </div>
-        <input type="text" class="answer-input" v-model="localValue" placeholder="Write your answer here..."
-          autocomplete="off" />
+        <input
+          type="text"
+          class="answer-input"
+          v-model="localValue"
+          placeholder="Write your answer here..."
+          autocomplete="off"
+        />
       </div>
 
 
@@ -222,15 +222,24 @@ const isSelected = (option) => {
             <path d="M4 5h16v11H7l-3 3V5Z" />
           </svg>
         </div>
-        <input type="text" class="answer-input" v-model="localValue" placeholder=" Enter a short answer... "
-          autocomplete="off" />
+        <input
+          type="text"
+          class="answer-input"
+          v-model="localValue"
+          placeholder="Enter a short answer..."
+          autocomplete="off"
+        />
       </div>
 
 
       <!-- 4. YOZMA MASHQ (WRITING) -->
       <div v-else-if="isWritingType" class="writing-box">
-        <textarea class="writing-textarea" rows="8" v-model="localValue"
-          placeholder="Write your answer here..."></textarea>
+        <textarea
+          class="writing-textarea"
+          rows="8"
+          v-model="localValue"
+          placeholder="Write your answer here..."
+        ></textarea>
 
         <div class="writing-footer">
           <div class="writing-info">
@@ -244,13 +253,13 @@ const isSelected = (option) => {
             <span>{{ wordCount }}</span>
             <span class="counter-divider">/</span>
             <span>{{ maxWords }}</span>
-            <span class="words-text">so'z</span>
+            <span class="words-text">so‘z</span>
           </div>
         </div>
       </div>
 
 
-      <!-- 5. NOMA'LUM YOKI XATO TUR (UNKNOWN TYPE) -->
+      <!-- 5. NOMA'LUM YOKI XATO TUR -->
       <div v-else class="unsupported-question">
         <div class="unsupported-icon">!</div>
         <div>
