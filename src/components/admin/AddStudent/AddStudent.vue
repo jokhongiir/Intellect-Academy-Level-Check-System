@@ -195,7 +195,7 @@ const handleCreateStudent = async () => {
     }
 
     // Strict structure: 24 MC + 6 Note → Reading → Writing
-    const selectedMultiples = shuffleArray(sections.multiple_choice).slice(0, 24)
+    const selectedMultiples = shuffleArray(sections.multiple_choice).slice(0, 40)
     const selectedNotes = shuffleArray(sections.note_completion).slice(0, 6)
     const selectedReadings = shuffleArray(sections.reading).slice(0, 5)
     const selectedWritings = shuffleArray(sections.writing).slice(0, 1)
