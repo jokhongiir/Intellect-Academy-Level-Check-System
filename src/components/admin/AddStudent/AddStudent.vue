@@ -49,13 +49,13 @@ const filteredStudents = computed(() => {
   let list = students.value
 
   if (selectedFilterLevel.value !== 'all') {
-    list = list.filter(s => s.level === selectedFilterLevel.value)
+    list = list.filter((s) => s.level === selectedFilterLevel.value)
   }
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
     list = list.filter(
-      s =>
+      (s) =>
         s.full_name?.toLowerCase().includes(q) ||
         s.student_id?.toLowerCase().includes(q)
     )
@@ -184,34 +184,20 @@ const handleCreateStudent = async () => {
       )
     }
 
-    // Group by section
-    const sections = {
-      writing: levelTests.filter(t => t.section_type === 'writing'),
-      reading: levelTests.filter(t => t.section_type === 'reading'),
-      multiple_choice: levelTests.filter(t => t.section_type === 'multiple_choice'),
-      note_completion: levelTests.filter(t => t.section_type === 'note_completion'),
-      summary_completion: levelTests.filter(t => t.section_type === 'summary_completion'),
-      short_answer: levelTests.filter(t => t.section_type === 'short_answer')
+    // Faqat Multiple Choice
+    const multipleChoiceTests = levelTests.filter(
+      (t) => t.section_type === 'multiple_choice'
+    )
+
+    if (multipleChoiceTests.length < 40) {
+      throw new Error(
+        `"${level.value}" darajasida Multiple Choice savollar yetarli emas. Hozir: ${multipleChoiceTests.length} ta. Kamida 40 ta kerak.`
+      )
     }
 
-    // Strict structure: 24 MC + 6 Note → Reading → Writing
-    const selectedMultiples = shuffleArray(sections.multiple_choice).slice(0, 40)
-    const selectedNotes = shuffleArray(sections.note_completion).slice(0, 6)
-    const selectedReadings = shuffleArray(sections.reading).slice(0, 5)
-    const selectedWritings = shuffleArray(sections.writing).slice(0, 1)
-
-    const structuredTests = [
-      ...selectedMultiples,
-      ...selectedNotes,
-      ...selectedReadings,
-      ...selectedWritings
-    ]
-
-    if (!structuredTests.length) {
-      throw new Error('Test paketini yig‘ib bo‘lmadi. Section typelarini tekshiring.')
-    }
-
-    const assignedIds = structuredTests.map(t => t.id)
+    // Random 40 ta Multiple Choice
+    const selectedMultiples = shuffleArray(multipleChoiceTests).slice(0, 40)
+    const assignedIds = selectedMultiples.map((t) => t.id)
 
     const { error: insertError } = await supabase.from('students').insert([
       {
@@ -226,7 +212,11 @@ const handleCreateStudent = async () => {
 
     await fetchStudents()
     isModalOpen.value = false
-    showAlert('Success', 'Yangi student muvaffaqiyatli qo‘shildi.', 'success')
+    showAlert(
+      'Success',
+      'Yangi student muvaffaqiyatli qo‘shildi (40 ta Multiple Choice).',
+      'success'
+    )
   } catch (err) {
     errorMsg.value = err.message
   } finally {
@@ -279,10 +269,9 @@ const openStudentDetailModal = async (student, event) => {
 
     if (error) throw error
 
-    // Preserve original order
-    const testMap = new Map(data.map(t => [t.id, t]))
+    const testMap = new Map(data.map((t) => [t.id, t]))
     studentTests.value = student.assigned_questions
-      .map(id => testMap.get(id))
+      .map((id) => testMap.get(id))
       .filter(Boolean)
   } catch (err) {
     console.error('Fetch assigned tests error:', err.message)
@@ -307,7 +296,6 @@ const copyToClipboard = (text, type, event) => {
 onMounted(() => {
   fetchStudents()
 })
-
 </script>
 
 <template>
@@ -396,10 +384,7 @@ onMounted(() => {
               </td>
             </tr>
 
-            <tr
-              v-for="(student, index) in filteredStudents"
-              :key="student.id"
-            >
+            <tr v-for="(student, index) in filteredStudents" :key="student.id">
               <td>{{ index + 1 }}</td>
 
               <td>
@@ -454,11 +439,7 @@ onMounted(() => {
     </div>
 
     <!-- ===================== ADD STUDENT MODAL ===================== -->
-    <div
-      v-if="isModalOpen"
-      class="modal-backdrop"
-      @click.self="closeModal"
-    >
+    <div v-if="isModalOpen" class="modal-backdrop" @click.self="closeModal">
       <div class="modal-card">
         <div class="modal-header">
           <h3>Add New Student</h3>
